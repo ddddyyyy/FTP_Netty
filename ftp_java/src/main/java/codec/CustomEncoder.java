@@ -14,14 +14,14 @@ import static io.netty.buffer.Unpooled.wrappedBuffer;
 
 /**
  * 自定义的编码器
- * 包头的格式
- * 包长度（8B） + 包数据类型（1B）
+ * 数据包的格式
+ * 包长度（8B） + 包数据类型（1B）+ 数据
  */
 @Log
 public class CustomEncoder extends MessageToMessageEncoder<MessageLiteOrBuilder> {
 
     private byte[] encodeHeader(MessageLite msg, int length) {
-        byte messageType = 0x0f;
+        byte messageType = 0x0f;//数据类型
         //定义数据的类型
         if (msg instanceof Command.Request) {
             messageType = 0x00;
@@ -30,18 +30,16 @@ public class CustomEncoder extends MessageToMessageEncoder<MessageLiteOrBuilder>
         } else if (msg instanceof Command.Data) {
             messageType = 0x02;
         }
-
-        byte[] header = new byte[5];
         //数据包头
-
+        byte[] header = new byte[5];
         //数据长度
         int i = 0;
+        //将int32的4个字节提取到数组
         for (byte b : ByteUtil.int2Bytes(length)) {
             header[i++] = b;
         }
         //数据类型
         header[4] = messageType;
-
         return header;
     }
 

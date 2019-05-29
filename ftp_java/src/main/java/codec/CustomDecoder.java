@@ -26,7 +26,7 @@ public class CustomDecoder extends ByteToMessageDecoder {
             //类型
             byte type = in.readByte();
 
-            //数据长度出错
+            //数据长度不够
             if (in.readableBytes() < length) {
                 in.resetReaderIndex();
                 return;
@@ -39,10 +39,12 @@ public class CustomDecoder extends ByteToMessageDecoder {
             int offset;
 
             int readableLen = body.readableBytes();
+            //判断ByteBuf是否有支撑数组，如果没有则说明其是用的是直接缓存模式
             if (body.hasArray()) {
                 array = body.array();
                 offset = body.arrayOffset() + body.readerIndex();
             } else {
+                //需要生成一个数组来保存
                 array = new byte[readableLen];
                 body.getBytes(body.readerIndex(), array, 0, readableLen);
                 offset = 0;
