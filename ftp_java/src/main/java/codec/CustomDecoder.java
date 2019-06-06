@@ -13,7 +13,7 @@ import java.util.List;
 public class CustomDecoder extends ByteToMessageDecoder {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws InvalidProtocolBufferException {
-        if (in.isReadable(4)) {
+        if (in.isReadable(5)) {
             //可以查看源码里面类的注释
             //文件操作的读写指针是分开的
             in.markReaderIndex();

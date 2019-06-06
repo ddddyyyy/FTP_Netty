@@ -76,10 +76,10 @@ public class MD5Util {
     public static String getFileMD5String(RandomAccessFile file) throws IOException {
         byte[] buffer = new byte[1024];
         int numRead;
+        file.seek(0);
         while ((numRead = file.read(buffer)) > 0) {
             messagedigest.update(buffer, 0, numRead);
         }
-        file.seek(0);
         return bufferToHex(messagedigest.digest());
     }
 

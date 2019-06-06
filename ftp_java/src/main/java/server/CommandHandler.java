@@ -21,22 +21,24 @@ import static cache.JedisUtil.*;
 @Log
 public class CommandHandler extends SimpleChannelInboundHandler<Command.Request> {
 
-    private String user = null;
-    private boolean isLogin = false;
 
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, Command.Request request) {
         Command.Request.Type command = request.getCommand();
+        String remote = channelHandlerContext
+                .channel().remoteAddress().toString();
         //判断用户是否登录
-        if (isLogin || command == Command.Request.Type.USER || command == Command.Request.Type.PASS || command == Command.Request.Type.BYE) {
+        if (null != (Objects.requireNonNull(getJedis()))
+                .get(user_online + remote)
+                || command == Command.Request.Type.USER || command == Command.Request.Type.PASS || command == Command.Request.Type.BYE) {
 
             String args = request.getArgs().replaceAll(" ", "");
             Command.Response.Builder response = Command.Response.newBuilder();
             switch (command) {
                 case USER:
-                    if (null != Objects.requireNonNull(getJedis()).get(user_prefix + args)) {
+                    if (null != (getJedis()).get(user_prefix + args)) {
                         //放入缓存
-                        user = args;
+                        (getJedis()).set(name_prefix + remote, args);
                         channelHandlerContext.writeAndFlush(Command
                                 .Response.newBuilder().setStatus(Command.Response.Status.OK));
                     } else {
@@ -46,16 +48,16 @@ public class CommandHandler extends SimpleChannelInboundHandler<Command.Request>
                     break;
                 case PASS:
                     //没有用户名的话
-                    if (user == null) {
+                    if (null == (getJedis()).get(name_prefix + remote)) {
                         channelHandlerContext.writeAndFlush(Command
                                 .Response.newBuilder().setStatus(Command.Response.Status.USER_NOT_EXIST));
                     } else {
                         //从缓存里面提取用户密码
-                        String password = Objects.requireNonNull(getJedis()).get(user_prefix + user);
+                        String password = (getJedis()).get(user_prefix + getJedis().get(name_prefix + remote));
                         if (null != password && password.equals(args)) {
                             channelHandlerContext.writeAndFlush(Command
                                     .Response.newBuilder().setStatus(Command.Response.Status.OK));
-                            isLogin = true;
+                            getJedis().set(user_online + remote, "online");
                         } else {
                             channelHandlerContext.writeAndFlush(Command
                                     .Response.newBuilder().setStatus(Command.Response.Status.PASS_ERROR));
@@ -89,7 +91,7 @@ public class CommandHandler extends SimpleChannelInboundHandler<Command.Request>
                     if (port != -1 && Main.data_server(port)) {
                         response.setStatus(Command.Response.Status.PASV);
                         response.setMsg(port.toString());
-                        Objects.requireNonNull(JedisUtil.getJedis())
+                        (JedisUtil.getJedis())
                                 .set(file_prefix + channelHandlerContext.channel()
                                         .remoteAddress().toString().split(":.*")[0] + String.format(":%d", port), args);
                     } else {

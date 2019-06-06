@@ -16,6 +16,12 @@ public class JedisUtil {
     public static String md5_prefix = "ftp:md5:";
     public static final String user_prefix = "ftp:user:";
     public static final String user_online = "ftp:online:";
+    public static final String name_prefix = "ftp:name:";
+
+    public static final String obj_file_prefix = "ftp:obj:file:";
+    public static final String obj_out_prefix = "ftp:obj:out:";
+    public static final String obj_check_prefix = "ftp:obj:check:";
+
 
     private static JedisPool jedisPool;
 
