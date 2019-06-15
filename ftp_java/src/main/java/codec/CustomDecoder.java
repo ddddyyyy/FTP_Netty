@@ -7,6 +7,7 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import lombok.extern.java.Log;
 import model.Command;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Log
@@ -49,6 +50,7 @@ public class CustomDecoder extends ByteToMessageDecoder {
                 body.getBytes(body.readerIndex(), array, 0, readableLen);
                 offset = 0;
             }
+
 
             switch (type) {
                 case 0x00:

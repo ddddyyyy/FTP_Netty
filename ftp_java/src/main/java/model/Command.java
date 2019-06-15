@@ -1061,6 +1061,18 @@ public final class Command {
        * <code>ERROR = 8;</code>
        */
       ERROR(8),
+      /**
+       * <pre>
+       *MD5
+       * </pre>
+       *
+       * <code>MD5 = 9;</code>
+       */
+      MD5(9),
+      /**
+       * <code>GG = 10;</code>
+       */
+      GG(10),
       UNRECOGNIZED(-1),
       ;
 
@@ -1132,6 +1144,18 @@ public final class Command {
        * <code>ERROR = 8;</code>
        */
       public static final int ERROR_VALUE = 8;
+      /**
+       * <pre>
+       *MD5
+       * </pre>
+       *
+       * <code>MD5 = 9;</code>
+       */
+      public static final int MD5_VALUE = 9;
+      /**
+       * <code>GG = 10;</code>
+       */
+      public static final int GG_VALUE = 10;
 
 
       public final int getNumber() {
@@ -1161,6 +1185,8 @@ public final class Command {
           case 6: return NOT_FOUND;
           case 7: return READY;
           case 8: return ERROR;
+          case 9: return MD5;
+          case 10: return GG;
           default: return null;
         }
       }
@@ -2688,17 +2714,17 @@ public final class Command {
       "\n\rcommand.proto\022\003ftp\"\204\001\n\007Request\022\"\n\007comm" +
       "and\030\001 \001(\0162\021.ftp.Request.Type\022\014\n\004args\030\002 \001" +
       "(\t\"G\n\004Type\022\010\n\004USER\020\000\022\007\n\003BYE\020\001\022\006\n\002LS\020\002\022\007\n" +
-      "\003GET\020\003\022\007\n\003PUT\020\004\022\010\n\004PASS\020\005\022\010\n\004PORT\020\006\"\261\001\n\004" +
+      "\003GET\020\003\022\007\n\003PUT\020\004\022\010\n\004PASS\020\005\022\010\n\004PORT\020\006\"\302\001\n\004" +
       "Data\022\014\n\004data\030\001 \001(\014\022 \n\006status\030\002 \001(\0162\020.ftp" +
-      ".Data.Status\022\013\n\003pos\030\003 \001(\003\"l\n\006Status\022\007\n\003G" +
+      ".Data.Status\022\013\n\003pos\030\003 \001(\003\"}\n\006Status\022\007\n\003G" +
       "ET\020\000\022\007\n\003PUT\020\001\022\007\n\003FIN\020\002\022\013\n\007SUCCESS\020\003\022\t\n\005S" +
       "TORE\020\004\022\n\n\006UPLOAD\020\005\022\r\n\tNOT_FOUND\020\006\022\t\n\005REA" +
-      "DY\020\007\022\t\n\005ERROR\020\010\"\260\001\n\010Response\022$\n\006status\030\001" +
-      " \001(\0162\024.ftp.Response.Status\022\013\n\003msg\030\002 \001(\t\"" +
-      "q\n\006Status\022\r\n\tFILE_LIST\020\000\022\010\n\004PASV\020\001\022\010\n\004EP" +
-      "SV\020\002\022\t\n\005ERROR\020\003\022\006\n\002OK\020\004\022\022\n\016USER_NOT_EXIS" +
-      "T\020\005\022\016\n\nPASS_ERROR\020\006\022\r\n\tNOT_LOGIN\020\007B\007\n\005mo" +
-      "delb\006proto3"
+      "DY\020\007\022\t\n\005ERROR\020\010\022\007\n\003MD5\020\t\022\006\n\002GG\020\n\"\260\001\n\010Res" +
+      "ponse\022$\n\006status\030\001 \001(\0162\024.ftp.Response.Sta" +
+      "tus\022\013\n\003msg\030\002 \001(\t\"q\n\006Status\022\r\n\tFILE_LIST\020" +
+      "\000\022\010\n\004PASV\020\001\022\010\n\004EPSV\020\002\022\t\n\005ERROR\020\003\022\006\n\002OK\020\004" +
+      "\022\022\n\016USER_NOT_EXIST\020\005\022\016\n\nPASS_ERROR\020\006\022\r\n\t" +
+      "NOT_LOGIN\020\007B\007\n\005modelb\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,

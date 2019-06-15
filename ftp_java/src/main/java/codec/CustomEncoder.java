@@ -8,6 +8,7 @@ import lombok.extern.java.Log;
 import model.Command;
 import util.ByteUtil;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static io.netty.buffer.Unpooled.wrappedBuffer;
@@ -15,7 +16,7 @@ import static io.netty.buffer.Unpooled.wrappedBuffer;
 /**
  * 自定义的编码器
  * 数据包的格式
- * 包长度（8B） + 包数据类型（1B）+ 数据
+ * 包长度（4B） + 包数据类型（1B）+ 数据
  */
 @Log
 public class CustomEncoder extends MessageToMessageEncoder<MessageLiteOrBuilder> {
@@ -45,15 +46,19 @@ public class CustomEncoder extends MessageToMessageEncoder<MessageLiteOrBuilder>
 
     @Override
     protected void encode(ChannelHandlerContext ctx, MessageLiteOrBuilder msg, List<Object> out) throws Exception {
+        byte[] body;
+        byte[] header;
         if (msg instanceof MessageLite) {
-            byte[] body = ((MessageLite) msg).toByteArray();
-            byte[] header = encodeHeader(((MessageLite) msg), body.length);
+            body = ((MessageLite) msg).toByteArray();
+            header = encodeHeader(((MessageLite) msg), body.length);
             //写数据
             out.add(wrappedBuffer(ByteUtil.concat(header, body)));
         } else if (msg instanceof MessageLite.Builder) {
-            byte[] body = ((MessageLite.Builder) msg).build().toByteArray();
-            byte[] header = encodeHeader(((MessageLite.Builder) msg).build(), body.length);
+            body = ((MessageLite.Builder) msg).build().toByteArray();
+            header = encodeHeader(((MessageLite.Builder) msg).build(), body.length);
             out.add(wrappedBuffer(ByteUtil.concat(header, body)));
         }
+//        log.info("the header's binary:" + Arrays.toString(header));
+//        log.info("the data's binary:" + Arrays.toString(body));
     }
 }

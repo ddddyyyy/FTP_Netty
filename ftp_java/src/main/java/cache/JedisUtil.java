@@ -51,9 +51,9 @@ public class JedisUtil {
             //Redis的端口号
             int PORT = 6379;
             //访问密码
-            String AUTH = "1234567890***";
+//            String AUTH = "1234567890***";
             int TIMEOUT = 10000;
-            jedisPool = new JedisPool(config, ADDR, PORT, TIMEOUT, AUTH);
+            jedisPool = new JedisPool(config, ADDR, PORT, TIMEOUT);
         } catch (Exception e) {
             e.printStackTrace();
         }

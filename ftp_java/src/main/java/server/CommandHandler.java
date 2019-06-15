@@ -25,10 +25,11 @@ public class CommandHandler extends SimpleChannelInboundHandler<Command.Request>
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, Command.Request request) {
         Command.Request.Type command = request.getCommand();
+        System.out.println(command.name());
         String remote = channelHandlerContext
                 .channel().remoteAddress().toString();
         //判断用户是否登录
-        if (null != (Objects.requireNonNull(getJedis()))
+        if (true || null != (Objects.requireNonNull(getJedis()))
                 .get(user_online + remote)
                 || command == Command.Request.Type.USER || command == Command.Request.Type.PASS || command == Command.Request.Type.BYE) {
 

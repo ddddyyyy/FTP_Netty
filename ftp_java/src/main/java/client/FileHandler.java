@@ -11,7 +11,6 @@ import util.MD5Util;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
@@ -100,7 +99,7 @@ public class FileHandler extends SimpleChannelInboundHandler<Command.Data> {
                     data.setStatus(Command.Data.Status.STORE);
                     long pos = 0;
                     long size = file.length();
-                    pos = server.FileHandler.transport(ctx, MAX_SIZE, data, buffer, input, pos, size);
+                    pos = server.FileHandler.transport(ctx, MAX_SIZE, data, buffer, input, pos, size, file.length());
                     //文件终止
                     data.setPos(pos);
                     data.setData(ByteString.EMPTY);

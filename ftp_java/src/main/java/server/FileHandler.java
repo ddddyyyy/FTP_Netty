@@ -72,12 +72,16 @@ public class FileHandler extends SimpleChannelInboundHandler<Command.Data> {
                     long pos = 0;
                     long size = file.length();
                     log.info("start to transport file");
-                    pos = transport(ctx, MAX_SIZE, data, buffer, input, pos, size);
+                    pos = transport(ctx, MAX_SIZE, data, buffer, input, pos, size, file.length());
                     //文件终止
                     data.setPos(pos);
                     data.setData(ByteString.EMPTY);
                     ctx.writeAndFlush(data);
+                    data.setStatus(Command.Data.Status.MD5);
+                    data.setData(ByteString.copyFromUtf8(MD5Util.getFileMD5String(file)));
+                    ctx.writeAndFlush(data);
                     input.close();
+                    log.info("end transport file");
                 } catch (FileNotFoundException e) {
                     data.setStatus(Command.Data.Status.NOT_FOUND);
                     ctx.writeAndFlush(data);
@@ -85,7 +89,20 @@ public class FileHandler extends SimpleChannelInboundHandler<Command.Data> {
                     e.printStackTrace();
                 }
                 break;
+            case MD5:
+                try {
+                    if (msg.getData().toStringUtf8().equals(MD5Util.getFileMD5String((RandomAccessFile) (Objects.requireNonNull(EhCacheUtil.get(obj_out_prefix + remote)))))) {
+                        ctx.writeAndFlush(Command.Data.newBuilder().setStatus(Command.Data.Status.FIN));
+                    } else {
+                        Objects.requireNonNull(JedisUtil.getJedis()).set(md5_prefix
+                                + ctx.channel().remoteAddress().toString(), msg.getData().toStringUtf8());
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
             case READY:
+                log.info("client ready to send");
                 //fileName必须为相对路径下的全路径
                 file = (File) (EhCacheUtil.get(obj_file_prefix + remote));
                 //打开写文件
@@ -97,13 +114,15 @@ public class FileHandler extends SimpleChannelInboundHandler<Command.Data> {
                         log.info("file is exist");
                     }
                     RandomAccessFile out = (RandomAccessFile) (EhCacheUtil.get(obj_out_prefix + remote));
+                    assert out != null;
                     out.setLength(ByteUtil.bytes2Long(msg.getData().toByteArray()));
-                    ctx.writeAndFlush(Command.Data.newBuilder().setStatus(Command.Data.Status.GET));
+                    ctx.writeAndFlush(Command.Data.newBuilder().setStatus(Command.Data.Status.GET).setData(ByteString.copyFromUtf8("2333")));
                 } catch (FileNotFoundException e) {
                     ctx.writeAndFlush(Command.Data.newBuilder().setStatus(Command.Data.Status.NOT_FOUND));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                break;
             case STORE:
                 RandomAccessFile out = (RandomAccessFile) (EhCacheUtil.get(obj_out_prefix + remote));
                 try {
@@ -141,16 +160,13 @@ public class FileHandler extends SimpleChannelInboundHandler<Command.Data> {
         }
     }
 
-    public static long transport(ChannelHandlerContext ctx, int MAX_SIZE, Command.Data.Builder data, byte[] buffer, FileInputStream input, long pos, long size) throws IOException {
+    public static long transport(ChannelHandlerContext ctx, int MAX_SIZE, Command.Data.Builder data, byte[] buffer, FileInputStream input, long pos, long size, long length) throws IOException {
         while (input.read(buffer) != -1) {
             data.setPos(pos++);
             //说明到了文件尾了
             if (size <= pos * MAX_SIZE) {
-                int i = buffer.length - 1;
-                //剔除00
-                while (i > 0 && buffer[i] == 0) --i;
-                //发送文件
-                data.setData(ByteString.copyFrom(buffer, 0, i + 1));
+                int i = (int) (length - (pos - 1) * MAX_SIZE);
+                data.setData(ByteString.copyFrom(buffer, 0, i));
             } else data.setData(ByteString.copyFrom(buffer)); //直接发送
             ctx.writeAndFlush(data);
             //重新为buffer分配内存空间
