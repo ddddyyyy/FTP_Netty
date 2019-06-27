@@ -1,14 +1,11 @@
 package util;
 
-import cache.JedisUtil;
+import cache.EhCacheUtil;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 
-import static cache.JedisUtil.user_prefix;
+import static cache.EhCacheUtil.user_prefix;
 
 /**
  * Java解析.ini文件
@@ -24,8 +21,7 @@ public class InitData {
         Properties props = new Properties();
         props.load(br);
         for (Object s : props.keySet()) {
-            Objects.requireNonNull(JedisUtil.getJedis())
-                    .set(user_prefix + s.toString(), props.getProperty(s.toString()));
+            EhCacheUtil.put(user_prefix + s.toString(), props.getProperty(s.toString()));
         }
     }
 }

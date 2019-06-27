@@ -1,6 +1,5 @@
 package client;
 
-import cache.JedisUtil;
 import codec.CustomDecoder;
 import codec.CustomEncoder;
 import io.netty.bootstrap.Bootstrap;
@@ -10,7 +9,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import model.Command;
-import redis.clients.jedis.JedisPool;
 
 import java.util.Arrays;
 import java.util.List;
@@ -23,7 +21,6 @@ public class Main {
     static String method;
 
     public static void main(String[] args) throws Exception {
-        JedisUtil.init();
         connect(666, "127.0.0.1");
     }
 

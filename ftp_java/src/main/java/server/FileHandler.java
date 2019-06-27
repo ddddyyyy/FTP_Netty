@@ -1,20 +1,18 @@
 package server;
 
-import cache.JedisUtil;
-import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.java.Log;
 import model.Command;
 import util.ByteUtil;
-import util.EhCacheUtil;
+import cache.EhCacheUtil;
 import util.MD5Util;
 
 import java.io.*;
 import java.util.Objects;
 
-import static cache.JedisUtil.*;
+import static cache.EhCacheUtil.*;
 
 @Log
 public class FileHandler extends SimpleChannelInboundHandler<Command.Data> {
@@ -31,7 +29,7 @@ public class FileHandler extends SimpleChannelInboundHandler<Command.Data> {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         //通知客户端连接成功了
         super.channelActive(ctx);
-        String fileName = Objects.requireNonNull(JedisUtil.getJedis()).get(file_prefix + ctx.channel()
+        String fileName = (String) EhCacheUtil.get(file_prefix + ctx.channel()
                 .localAddress().toString());
 
         //fileName必须为相对路径下的全路径
@@ -43,7 +41,6 @@ public class FileHandler extends SimpleChannelInboundHandler<Command.Data> {
         String remote = ctx.channel().remoteAddress().toString();
 
         EhCacheUtil.put(obj_file_prefix + remote, file);
-        log.info(JSON.toJSONString((EhCacheUtil.get(obj_file_prefix + remote))));
         EhCacheUtil.put(obj_out_prefix + remote, new RandomAccessFile(path + fileName, "rw"));
     }
 
@@ -62,7 +59,7 @@ public class FileHandler extends SimpleChannelInboundHandler<Command.Data> {
                 //二进制读取文件并传给客户端
                 try {
                     //设置文件的md5值
-                    Objects.requireNonNull(JedisUtil.getJedis()).set(md5_prefix + ctx.channel()
+                    EhCacheUtil.put(md5_prefix + ctx.channel()
                             .localAddress().toString(), MD5Util.getFileMD5String(file));
 
                     byte[] buffer = new byte[MAX_SIZE];
@@ -91,11 +88,10 @@ public class FileHandler extends SimpleChannelInboundHandler<Command.Data> {
                 break;
             case MD5:
                 try {
+                    EhCacheUtil.put(md5_prefix
+                            + ctx.channel().remoteAddress().toString(), msg.getData().toStringUtf8());
                     if (msg.getData().toStringUtf8().equals(MD5Util.getFileMD5String((RandomAccessFile) (Objects.requireNonNull(EhCacheUtil.get(obj_out_prefix + remote)))))) {
                         ctx.writeAndFlush(Command.Data.newBuilder().setStatus(Command.Data.Status.FIN));
-                    } else {
-                        Objects.requireNonNull(JedisUtil.getJedis()).set(md5_prefix
-                                + ctx.channel().remoteAddress().toString(), msg.getData().toStringUtf8());
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -110,7 +106,7 @@ public class FileHandler extends SimpleChannelInboundHandler<Command.Data> {
                 try {
                     //删除存在的文件
                     assert file != null;
-                    if (file.exists() && file.delete()) {
+                    if (file.exists()) {
                         log.info("file is exist");
                     }
                     RandomAccessFile out = (RandomAccessFile) (EhCacheUtil.get(obj_out_prefix + remote));
@@ -125,6 +121,7 @@ public class FileHandler extends SimpleChannelInboundHandler<Command.Data> {
                 break;
             case STORE:
                 RandomAccessFile out = (RandomAccessFile) (EhCacheUtil.get(obj_out_prefix + remote));
+                assert out != null;
                 try {
                     log.info(String.valueOf(msg.getPos()));
                     //使用md5进行判断
@@ -138,7 +135,7 @@ public class FileHandler extends SimpleChannelInboundHandler<Command.Data> {
                     }
                     Boolean check = (Boolean) EhCacheUtil.get(obj_check_prefix + remote);
                     if (check != null && check) {
-                        String md5 = Objects.requireNonNull(JedisUtil.getJedis()).get(md5_prefix
+                        String md5 = (String) EhCacheUtil.get(md5_prefix
                                 + ctx.channel().remoteAddress().toString());
                         if (md5 != null && md5.equals(MD5Util.getFileMD5String(out))) {
                             //终止连接
@@ -179,9 +176,14 @@ public class FileHandler extends SimpleChannelInboundHandler<Command.Data> {
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         super.channelInactive(ctx);
         //清空缓存
-        Objects.requireNonNull(JedisUtil.getJedis()).del(md5_prefix + ctx.channel()
+        String remote = ctx.channel()
+                .localAddress().toString();
+
+        EhCacheUtil.remove(md5_prefix + ctx.channel()
                 .localAddress().toString());
-        JedisUtil.getJedis().del(file_prefix + ctx.channel()
-                .localAddress().toString());
+        EhCacheUtil.remove(file_prefix + remote);
+
+        EhCacheUtil.remove(obj_file_prefix + remote);
+        EhCacheUtil.remove(obj_out_prefix + remote);
     }
 }

@@ -1,6 +1,5 @@
 package server;
 
-import cache.JedisUtil;
 import codec.CustomDecoder;
 import codec.CustomEncoder;
 import io.netty.bootstrap.ServerBootstrap;
@@ -14,7 +13,6 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.java.Log;
-import util.EhCacheUtil;
 import util.InitData;
 
 @Log
@@ -101,10 +99,7 @@ public class Main {
     }
 
     public static void main(String[] args) throws Exception {
-        JedisUtil.init();
         InitData.init();
-//        EhCacheUtil.put("test", 1);
-//        log.info((String) EhCacheUtil.get("test"));
         command_server();
     }
 }

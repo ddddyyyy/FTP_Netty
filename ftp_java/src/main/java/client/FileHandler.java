@@ -1,6 +1,5 @@
 package client;
 
-import cache.JedisUtil;
 import com.google.protobuf.ByteString;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -12,9 +11,6 @@ import util.MD5Util;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-
-import static cache.JedisUtil.md5_prefix;
 
 /**
  * 客户端的文件处理器
@@ -90,9 +86,10 @@ public class FileHandler extends SimpleChannelInboundHandler<Command.Data> {
                 //二进制读取文件并传给客户端
                 try {
                     File file = new File(path + Main.fileName);
-                    //设置文件的md5值
-                    Objects.requireNonNull(JedisUtil.getJedis()).set(md5_prefix + ctx.channel()
-                            .localAddress().toString(), MD5Util.getFileMD5String(file));
+
+                    data.setStatus(Command.Data.Status.MD5);
+                    data.setData(ByteString.copyFromUtf8(MD5Util.getFileMD5String(file)));
+                    ctx.writeAndFlush(data);
 
                     byte[] buffer = new byte[MAX_SIZE];
                     FileInputStream input = new FileInputStream(file);
@@ -103,14 +100,15 @@ public class FileHandler extends SimpleChannelInboundHandler<Command.Data> {
                     //文件终止
                     data.setPos(pos);
                     data.setData(ByteString.EMPTY);
+                    ctx.writeAndFlush(data);
                     input.close();
                 } catch (FileNotFoundException e) {
                     data.setStatus(Command.Data.Status.NOT_FOUND);
+                    ctx.writeAndFlush(data);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                //发送
-                ctx.writeAndFlush(data);
+
                 break;
             //下载文件
             case STORE:
@@ -127,15 +125,19 @@ public class FileHandler extends SimpleChannelInboundHandler<Command.Data> {
                     PrintProcess();
                 }
                 if (check) {
-                    if (md5 == null) {
-                        md5 = JedisUtil.getJedis().get(md5_prefix
-                                + ctx.channel().remoteAddress().toString());
-                    }
                     if (md5 != null && md5.equals(MD5Util.getFileMD5String(out))) {
                         //终止连接
                         ctx.writeAndFlush(Command.Data.newBuilder().setStatus(Command.Data.Status.FIN));
                         ctx.close();
                     }
+                }
+                break;
+            case MD5:
+                md5 = msg.getData().toStringUtf8();
+                if (md5.equals(MD5Util.getFileMD5String(out))) {
+                    //终止连接
+                    ctx.writeAndFlush(Command.Data.newBuilder().setStatus(Command.Data.Status.FIN));
+                    ctx.close();
                 }
                 break;
             case FIN:
@@ -144,6 +146,17 @@ public class FileHandler extends SimpleChannelInboundHandler<Command.Data> {
         }
     }
 
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        super.channelInactive(ctx);
+        //情空变量
+        completeCount = 0;
+        path = null;
+        out = null;
+        check = false;
+        md5 = null;
+    }
 
     /**
      * 打印进度

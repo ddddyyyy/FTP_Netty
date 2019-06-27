@@ -1,15 +1,12 @@
-package util;
+package cache;
 
 import lombok.extern.java.Log;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheException;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -29,6 +26,16 @@ import java.util.Collection;
  */
 @Log
 public class EhCacheUtil {
+
+    public static String file_prefix = "ftp:file:";
+    public static String md5_prefix = "ftp:md5:";
+    public static final String user_prefix = "ftp:user:";
+    public static final String user_online = "ftp:online:";
+    public static final String name_prefix = "ftp:name:";
+
+    public static final String obj_file_prefix = "ftp:obj:file:";
+    public static final String obj_out_prefix = "ftp:obj:out:";
+    public static final String obj_check_prefix = "ftp:obj:check:";
 
     private static CacheManager manager = null;
 
@@ -137,6 +144,16 @@ public class EhCacheUtil {
             return e.getObjectValue();
         }
         return null;
+    }
+
+    /**
+     * Remove.
+     *
+     * @param key the key
+     */
+    public static void remove(String key) {
+        Cache cache = checkCache("ftp");
+        cache.remove(key);
     }
 
     /**
